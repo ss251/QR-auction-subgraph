@@ -1,0 +1,438 @@
+[
+  {
+    "type": "constructor",
+    "inputs": [
+      { "name": "_weth", "type": "address", "internalType": "address" },
+      { "name": "_duration", "type": "uint256", "internalType": "uint256" },
+      { "name": "_reservePrice", "type": "uint256", "internalType": "uint256" },
+      { "name": "_treasury", "type": "address", "internalType": "address" }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  { "name": "AUCTION_ACTIVE", "type": "error", "inputs": [] },
+  { "name": "AUCTION_CREATE_FAILED_TO_LAUNCH", "type": "error", "inputs": [] },
+  { "name": "AUCTION_NOT_STARTED", "type": "error", "inputs": [] },
+  { "name": "AUCTION_OVER", "type": "error", "inputs": [] },
+  { "name": "AUCTION_SETTLED", "type": "error", "inputs": [] },
+  { "name": "CANNOT_CREATE_AUCTION", "type": "error", "inputs": [] },
+  { "name": "EnforcedPause", "type": "error", "inputs": [] },
+  { "name": "ExpectedPause", "type": "error", "inputs": [] },
+  { "name": "FAILING_WETH_TRANSFER", "type": "error", "inputs": [] },
+  { "name": "INSOLVENT", "type": "error", "inputs": [] },
+  { "name": "INVALID_TOKEN_ID", "type": "error", "inputs": [] },
+  { "name": "MINIMUM_BID_NOT_MET", "type": "error", "inputs": [] },
+  { "name": "MIN_BID_INCREMENT_1_PERCENT", "type": "error", "inputs": [] },
+  {
+    "name": "OwnableInvalidOwner",
+    "type": "error",
+    "inputs": [
+      { "name": "owner", "type": "address", "internalType": "address" }
+    ]
+  },
+  {
+    "name": "OwnableUnauthorizedAccount",
+    "type": "error",
+    "inputs": [
+      { "name": "account", "type": "address", "internalType": "address" }
+    ]
+  },
+  { "name": "RESERVE_PRICE_NOT_MET", "type": "error", "inputs": [] },
+  { "name": "ReentrancyGuardReentrantCall", "type": "error", "inputs": [] },
+  {
+    "name": "SafeCastOverflowedUintDowncast",
+    "type": "error",
+    "inputs": [
+      { "name": "bits", "type": "uint8", "internalType": "uint8" },
+      { "name": "value", "type": "uint256", "internalType": "uint256" }
+    ]
+  },
+  {
+    "name": "AuctionBid",
+    "type": "event",
+    "inputs": [
+      {
+        "name": "tokenId",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "bidder",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "extended",
+        "type": "bool",
+        "indexed": false,
+        "internalType": "bool"
+      },
+      {
+        "name": "endTime",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "urlString",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "name": "AuctionCreated",
+    "type": "event",
+    "inputs": [
+      {
+        "name": "tokenId",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "startTime",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "endTime",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "name": "AuctionSettled",
+    "type": "event",
+    "inputs": [
+      {
+        "name": "tokenId",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "winner",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "urlString",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "name": "DurationUpdated",
+    "type": "event",
+    "inputs": [
+      {
+        "name": "duration",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "name": "MinBidIncrementPercentageUpdated",
+    "type": "event",
+    "inputs": [
+      {
+        "name": "minBidIncrementPercentage",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "name": "OwnershipTransferred",
+    "type": "event",
+    "inputs": [
+      {
+        "name": "previousOwner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "newOwner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "name": "Paused",
+    "type": "event",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "name": "ReservePriceUpdated",
+    "type": "event",
+    "inputs": [
+      {
+        "name": "reservePrice",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "name": "TimeBufferUpdated",
+    "type": "event",
+    "inputs": [
+      {
+        "name": "timeBuffer",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "name": "Unpaused",
+    "type": "event",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "name": "auction",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      { "name": "tokenId", "type": "uint256", "internalType": "uint256" },
+      { "name": "highestBid", "type": "uint256", "internalType": "uint256" },
+      { "name": "highestBidder", "type": "address", "internalType": "address" },
+      { "name": "startTime", "type": "uint40", "internalType": "uint40" },
+      { "name": "endTime", "type": "uint40", "internalType": "uint40" },
+      { "name": "settled", "type": "bool", "internalType": "bool" },
+      {
+        "name": "qrMetadata",
+        "type": "tuple",
+        "components": [
+          {
+            "name": "validUntil",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          { "name": "urlString", "type": "string", "internalType": "string" }
+        ],
+        "internalType": "struct AuctionTypesV1.QRData"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "name": "createBid",
+    "type": "function",
+    "inputs": [
+      { "name": "_tokenId", "type": "uint256", "internalType": "uint256" },
+      { "name": "_urlString", "type": "string", "internalType": "string" }
+    ],
+    "outputs": [],
+    "stateMutability": "payable"
+  },
+  {
+    "name": "duration",
+    "type": "function",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "minBidIncrement",
+    "type": "function",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "owner",
+    "type": "function",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "pause",
+    "type": "function",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "name": "paused",
+    "type": "function",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "bool", "internalType": "bool" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "renounceOwnership",
+    "type": "function",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "name": "reservePrice",
+    "type": "function",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "setDuration",
+    "type": "function",
+    "inputs": [
+      { "name": "_duration", "type": "uint256", "internalType": "uint256" }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "name": "setMinimumBidIncrement",
+    "type": "function",
+    "inputs": [
+      { "name": "_percentage", "type": "uint256", "internalType": "uint256" }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "name": "setReservePrice",
+    "type": "function",
+    "inputs": [
+      { "name": "_reservePrice", "type": "uint256", "internalType": "uint256" }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "name": "setTimeBuffer",
+    "type": "function",
+    "inputs": [
+      { "name": "_timeBuffer", "type": "uint256", "internalType": "uint256" }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "name": "settings",
+    "type": "function",
+    "inputs": [],
+    "outputs": [
+      { "name": "treasury", "type": "address", "internalType": "address" },
+      { "name": "duration", "type": "uint40", "internalType": "uint40" },
+      { "name": "timeBuffer", "type": "uint40", "internalType": "uint40" },
+      { "name": "minBidIncrement", "type": "uint8", "internalType": "uint8" },
+      { "name": "reservePrice", "type": "uint256", "internalType": "uint256" },
+      { "name": "launched", "type": "bool", "internalType": "bool" },
+      {
+        "name": "qrMetadata",
+        "type": "tuple",
+        "components": [
+          {
+            "name": "validUntil",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          { "name": "urlString", "type": "string", "internalType": "string" }
+        ],
+        "internalType": "struct AuctionTypesV1.QRData"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "name": "settleAuction",
+    "type": "function",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "name": "settleCurrentAndCreateNewAuction",
+    "type": "function",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "name": "timeBuffer",
+    "type": "function",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "transferOwnership",
+    "type": "function",
+    "inputs": [
+      { "name": "newOwner", "type": "address", "internalType": "address" }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "name": "treasury",
+    "type": "function",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+    "stateMutability": "view"
+  },
+  {
+    "name": "unpause",
+    "type": "function",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  }
+]

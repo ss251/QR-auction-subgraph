@@ -1,0 +1,8 @@
+{
+  "base": {
+    "QRAuction": {
+      "address": "0x631ECd24314742b4a31103695A09F4a0dF9972AC",
+      "startBlock": 27197794
+    }
+  }
+}

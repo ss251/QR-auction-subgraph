@@ -88,3 +88,179 @@ type Unpaused @entity(immutable: true) {
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 }
+type QRAuctionV2AuctionBid @entity(immutable: true) {
+  id: Bytes!
+  tokenId: BigInt! # uint256
+  bidder: Bytes! # address
+  amount: BigInt! # uint256
+  extended: Boolean! # bool
+  endTime: BigInt! # uint256
+  urlString: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QRAuctionV2AuctionCreated @entity(immutable: true) {
+  id: Bytes!
+  tokenId: BigInt! # uint256
+  startTime: BigInt! # uint256
+  endTime: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QRAuctionV2AuctionSettled @entity(immutable: true) {
+  id: Bytes!
+  tokenId: BigInt! # uint256
+  winner: Bytes! # address
+  amount: BigInt! # uint256
+  urlString: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type AuctionWinnerOverridden @entity(immutable: true) {
+  id: Bytes!
+  tokenId: BigInt! # uint256
+  originalWinner: Bytes! # address
+  newWinner: Bytes! # address
+  amount: BigInt! # uint256
+  refunded: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QRAuctionV2DurationUpdated @entity(immutable: true) {
+  id: Bytes!
+  duration: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QRAuctionV2MinBidIncrementPercentageUpdated @entity(immutable: true) {
+  id: Bytes!
+  minBidIncrementPercentage: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QRAuctionV2OwnershipTransferred @entity(immutable: true) {
+  id: Bytes!
+  previousOwner: Bytes! # address
+  newOwner: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QRAuctionV2Paused @entity(immutable: true) {
+  id: Bytes!
+  account: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RefundFailed @entity(immutable: true) {
+  id: Bytes!
+  to: Bytes! # address
+  amount: BigInt! # uint256
+  reason: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QRAuctionV2ReservePriceUpdated @entity(immutable: true) {
+  id: Bytes!
+  reservePrice: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type SettlerWhitelistUpdated @entity(immutable: true) {
+  id: Bytes!
+  settler: Bytes! # address
+  status: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QRAuctionV2TimeBufferUpdated @entity(immutable: true) {
+  id: Bytes!
+  timeBuffer: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QRAuctionV2Unpaused @entity(immutable: true) {
+  id: Bytes!
+  account: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type AuctionMetrics @entity(immutable: false) {
+  id: ID!
+  totalETHBidVolume: BigInt!
+  totalQRBidVolume: BigInt!
+  totalETHBidCount: BigInt!
+  totalQRBidCount: BigInt!
+  uniqueETHBidders: BigInt!
+  uniqueQRBidders: BigInt!
+  lastUpdatedTimestamp: BigInt!
+  
+  # Added metrics
+  totalAuctions: BigInt!
+  totalBids: BigInt!
+  bidsPerAuction: BigDecimal!
+  totalBidsValue: BigInt!
+  totalUniqueBidders: BigInt!
+  
+  # Winning bids metrics - separated by token type
+  totalETHWinningBidsValue: BigInt!
+  averageETHWinningBidValue: BigDecimal!
+  totalQRWinningBidsValue: BigInt!
+  averageQRWinningBidValue: BigDecimal!
+  
+  # Bidding wars metrics
+  biddingWarsCount: BigInt!
+  biddingWarsPercentage: BigDecimal!
+  totalFinalMinutesBids: BigInt!
+  finalMinutesBidsPercentage: BigDecimal!
+}
+
+# Entity to track unique bidders
+type Bidder @entity(immutable: false) {
+  id: ID!
+  address: Bytes!
+  ethBids: Boolean!
+  qrBids: Boolean!
+  firstBidTimestamp: BigInt!
+  lastBidTimestamp: BigInt!
+  bidCount: BigInt!
+}
+
+# Entity to track auctions
+type TrackedAuction @entity(immutable: false) {
+  id: ID!
+  tokenId: BigInt!
+  isEthAuction: Boolean!
+  isQrAuction: Boolean!
+  createdAt: BigInt!
+  startTime: BigInt!
+  endTime: BigInt!
+  hasBiddingWar: Boolean!
+  totalBids: BigInt!
+  finalMinutesBids: BigInt!
+}

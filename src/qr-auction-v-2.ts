@@ -2,30 +2,36 @@ import {
   AuctionBid as AuctionBidEvent,
   AuctionCreated as AuctionCreatedEvent,
   AuctionSettled as AuctionSettledEvent,
+  AuctionWinnerOverridden as AuctionWinnerOverriddenEvent,
   DurationUpdated as DurationUpdatedEvent,
   MinBidIncrementPercentageUpdated as MinBidIncrementPercentageUpdatedEvent,
   OwnershipTransferred as OwnershipTransferredEvent,
   Paused as PausedEvent,
+  RefundFailed as RefundFailedEvent,
   ReservePriceUpdated as ReservePriceUpdatedEvent,
+  SettlerWhitelistUpdated as SettlerWhitelistUpdatedEvent,
   TimeBufferUpdated as TimeBufferUpdatedEvent,
-  Unpaused as UnpausedEvent
-} from "../generated/QRAuction/QRAuction"
+  Unpaused as UnpausedEvent,
+} from "../generated/QRAuctionV2/QRAuctionV2"
 import {
   AuctionBid,
   AuctionCreated,
   AuctionMetrics,
   AuctionSettled,
+  AuctionWinnerOverridden,
   Bidder,
   DurationUpdated,
   MinBidIncrementPercentageUpdated,
   OwnershipTransferred,
   Paused,
+  RefundFailed,
   ReservePriceUpdated,
+  SettlerWhitelistUpdated,
   TimeBufferUpdated,
   TrackedAuction,
-  Unpaused
+  Unpaused,
 } from "../generated/schema"
-import { BigInt, BigDecimal, Address, store } from "@graphprotocol/graph-ts"
+import { BigInt, BigDecimal } from "@graphprotocol/graph-ts"
 
 // Helper to convert BigInt to BigDecimal with 18 decimals precision
 function convertToDecimal(value: BigInt): BigDecimal {
@@ -79,8 +85,8 @@ function getOrCreateTrackedAuction(tokenId: BigInt, timestamp: BigInt, startTime
   if (auction == null) {
     auction = new TrackedAuction(auctionId)
     auction.tokenId = tokenId
-    auction.isEthAuction = true
-    auction.isQrAuction = false
+    auction.isEthAuction = false
+    auction.isQrAuction = true
     auction.createdAt = timestamp
     auction.startTime = startTime
     auction.endTime = endTime
@@ -98,9 +104,13 @@ function getOrCreateTrackedAuction(tokenId: BigInt, timestamp: BigInt, startTime
   return auction as TrackedAuction
 }
 
+// Maps to track auctions with bidding wars for QR auctions
+const qrAuctionTokens = new Map<string, boolean>()
+const qrAuctionBiddingWars = new Map<string, boolean>()
+
 export function handleAuctionBid(event: AuctionBidEvent): void {
   let entity = new AuctionBid(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
+    event.transaction.hash.concatI32(event.logIndex.toI32()),
   )
   entity.tokenId = event.params.tokenId
   entity.bidder = event.params.bidder
@@ -118,15 +128,15 @@ export function handleAuctionBid(event: AuctionBidEvent): void {
   // Update metrics
   let metrics = getOrCreateMetrics()
   
-  // Update ETH bid volume and count
-  metrics.totalETHBidVolume = metrics.totalETHBidVolume.plus(event.params.amount)
-  metrics.totalETHBidCount = metrics.totalETHBidCount.plus(BigInt.fromI32(1))
+  // Update QR bid volume and count
+  metrics.totalQRBidVolume = metrics.totalQRBidVolume.plus(event.params.amount)
+  metrics.totalQRBidCount = metrics.totalQRBidCount.plus(BigInt.fromI32(1))
   
   // Update total bids and total bids value
   metrics.totalBids = metrics.totalBids.plus(BigInt.fromI32(1))
   metrics.totalBidsValue = metrics.totalBidsValue.plus(event.params.amount)
   
-  // Track unique ETH bidders using persistent entity
+  // Track unique QR bidders using persistent entity
   const bidderAddress = event.params.bidder.toHexString()
   let bidder = Bidder.load(bidderAddress)
   
@@ -134,24 +144,24 @@ export function handleAuctionBid(event: AuctionBidEvent): void {
     // New bidder
     bidder = new Bidder(bidderAddress)
     bidder.address = event.params.bidder
-    bidder.ethBids = true
-    bidder.qrBids = false
+    bidder.ethBids = false
+    bidder.qrBids = true
     bidder.firstBidTimestamp = event.block.timestamp
     bidder.lastBidTimestamp = event.block.timestamp
     bidder.bidCount = BigInt.fromI32(1)
     
     // Update metrics for unique bidders
-    metrics.uniqueETHBidders = metrics.uniqueETHBidders.plus(BigInt.fromI32(1))
+    metrics.uniqueQRBidders = metrics.uniqueQRBidders.plus(BigInt.fromI32(1))
     metrics.totalUniqueBidders = metrics.totalUniqueBidders.plus(BigInt.fromI32(1))
   } else {
     // Existing bidder
     bidder.lastBidTimestamp = event.block.timestamp
     bidder.bidCount = bidder.bidCount.plus(BigInt.fromI32(1))
     
-    // If this is the first ETH bid from this bidder
-    if (!bidder.ethBids) {
-      bidder.ethBids = true
-      metrics.uniqueETHBidders = metrics.uniqueETHBidders.plus(BigInt.fromI32(1))
+    // If this is the first QR bid from this bidder
+    if (!bidder.qrBids) {
+      bidder.qrBids = true
+      metrics.uniqueQRBidders = metrics.uniqueQRBidders.plus(BigInt.fromI32(1))
     }
   }
   
@@ -166,8 +176,8 @@ export function handleAuctionBid(event: AuctionBidEvent): void {
     // But handle it just in case (data consistency)
     auction = new TrackedAuction(auctionId)
     auction.tokenId = event.params.tokenId
-    auction.isEthAuction = true
-    auction.isQrAuction = false
+    auction.isEthAuction = false
+    auction.isQrAuction = true
     auction.createdAt = event.block.timestamp
     auction.startTime = BigInt.fromI32(0) // We don't know the start time here
     auction.endTime = event.params.endTime
@@ -221,7 +231,7 @@ export function handleAuctionBid(event: AuctionBidEvent): void {
 
 export function handleAuctionCreated(event: AuctionCreatedEvent): void {
   let entity = new AuctionCreated(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
+    event.transaction.hash.concatI32(event.logIndex.toI32()),
   )
   entity.tokenId = event.params.tokenId
   entity.startTime = event.params.startTime
@@ -257,21 +267,34 @@ export function handleAuctionSettled(event: AuctionSettledEvent): void {
 
   entity.save()
   
-  // Update winning bid metrics - ETH auctions
+  // Update winning bid metrics - QR auctions
   let metrics = getOrCreateMetrics()
-  metrics.totalETHWinningBidsValue = metrics.totalETHWinningBidsValue.plus(event.params.amount)
   
   // Get auction
   const auctionId = event.params.tokenId.toString()
   let auction = TrackedAuction.load(auctionId)
   
-  // Calculate average ETH winning bid value more efficiently
-  let ethAuctionCount = BigInt.fromI32(0)
-  
-  if (auction && auction.isEthAuction) {
+  if (auction && !auction.isEthAuction) {
+    metrics.totalQRWinningBidsValue = metrics.totalQRWinningBidsValue.plus(event.params.amount)
+    
+    // Count QR auctions - using the fixed counting method
+    // Since we're dealing with V2 auctions that start at ID 23,
+    // we can either maintain a counter for QR auctions or calculate it 
+    // based on the auction IDs (which we know are 23 and above)
+    const tokenIdVal = event.params.tokenId.toI32();
+    let qrAuctionCount = BigInt.fromI32(tokenIdVal >= 23 ? 
+                                        (tokenIdVal - 22) as i32 : 1)
+    
+    if (!qrAuctionCount.isZero()) {
+      metrics.averageQRWinningBidValue = metrics.totalQRWinningBidsValue.toBigDecimal()
+        .div(qrAuctionCount.toBigDecimal())
+    }
+  } else if (auction && auction.isEthAuction) {
+    metrics.totalETHWinningBidsValue = metrics.totalETHWinningBidsValue.plus(event.params.amount)
+    
     // For ETH auctions, we know they're IDs 1-22
-    ethAuctionCount = BigInt.fromI32(Math.min(22, event.params.tokenId.toI32()) as i32)
-  
+    let ethAuctionCount = BigInt.fromI32(Math.min(22, event.params.tokenId.toI32()) as i32)
+    
     if (!ethAuctionCount.isZero()) {
       metrics.averageETHWinningBidValue = metrics.totalETHWinningBidsValue.toBigDecimal()
         .div(ethAuctionCount.toBigDecimal())
@@ -282,9 +305,28 @@ export function handleAuctionSettled(event: AuctionSettledEvent): void {
   metrics.save()
 }
 
+export function handleAuctionWinnerOverridden(
+  event: AuctionWinnerOverriddenEvent,
+): void {
+  let entity = new AuctionWinnerOverridden(
+    event.transaction.hash.concatI32(event.logIndex.toI32()),
+  )
+  entity.tokenId = event.params.tokenId
+  entity.originalWinner = event.params.originalWinner
+  entity.newWinner = event.params.newWinner
+  entity.amount = event.params.amount
+  entity.refunded = event.params.refunded
+
+  entity.blockNumber = event.block.number
+  entity.blockTimestamp = event.block.timestamp
+  entity.transactionHash = event.transaction.hash
+
+  entity.save()
+}
+
 export function handleDurationUpdated(event: DurationUpdatedEvent): void {
   let entity = new DurationUpdated(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
+    event.transaction.hash.concatI32(event.logIndex.toI32()),
   )
   entity.duration = event.params.duration
 
@@ -296,10 +338,10 @@ export function handleDurationUpdated(event: DurationUpdatedEvent): void {
 }
 
 export function handleMinBidIncrementPercentageUpdated(
-  event: MinBidIncrementPercentageUpdatedEvent
+  event: MinBidIncrementPercentageUpdatedEvent,
 ): void {
   let entity = new MinBidIncrementPercentageUpdated(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
+    event.transaction.hash.concatI32(event.logIndex.toI32()),
   )
   entity.minBidIncrementPercentage = event.params.minBidIncrementPercentage
 
@@ -311,10 +353,10 @@ export function handleMinBidIncrementPercentageUpdated(
 }
 
 export function handleOwnershipTransferred(
-  event: OwnershipTransferredEvent
+  event: OwnershipTransferredEvent,
 ): void {
   let entity = new OwnershipTransferred(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
+    event.transaction.hash.concatI32(event.logIndex.toI32()),
   )
   entity.previousOwner = event.params.previousOwner
   entity.newOwner = event.params.newOwner
@@ -328,7 +370,7 @@ export function handleOwnershipTransferred(
 
 export function handlePaused(event: PausedEvent): void {
   let entity = new Paused(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
+    event.transaction.hash.concatI32(event.logIndex.toI32()),
   )
   entity.account = event.params.account
 
@@ -339,11 +381,26 @@ export function handlePaused(event: PausedEvent): void {
   entity.save()
 }
 
+export function handleRefundFailed(event: RefundFailedEvent): void {
+  let entity = new RefundFailed(
+    event.transaction.hash.concatI32(event.logIndex.toI32()),
+  )
+  entity.to = event.params.to
+  entity.amount = event.params.amount
+  entity.reason = event.params.reason
+
+  entity.blockNumber = event.block.number
+  entity.blockTimestamp = event.block.timestamp
+  entity.transactionHash = event.transaction.hash
+
+  entity.save()
+}
+
 export function handleReservePriceUpdated(
-  event: ReservePriceUpdatedEvent
+  event: ReservePriceUpdatedEvent,
 ): void {
   let entity = new ReservePriceUpdated(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
+    event.transaction.hash.concatI32(event.logIndex.toI32()),
   )
   entity.reservePrice = event.params.reservePrice
 
@@ -354,9 +411,25 @@ export function handleReservePriceUpdated(
   entity.save()
 }
 
+export function handleSettlerWhitelistUpdated(
+  event: SettlerWhitelistUpdatedEvent,
+): void {
+  let entity = new SettlerWhitelistUpdated(
+    event.transaction.hash.concatI32(event.logIndex.toI32()),
+  )
+  entity.settler = event.params.settler
+  entity.status = event.params.status
+
+  entity.blockNumber = event.block.number
+  entity.blockTimestamp = event.block.timestamp
+  entity.transactionHash = event.transaction.hash
+
+  entity.save()
+}
+
 export function handleTimeBufferUpdated(event: TimeBufferUpdatedEvent): void {
   let entity = new TimeBufferUpdated(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
+    event.transaction.hash.concatI32(event.logIndex.toI32()),
   )
   entity.timeBuffer = event.params.timeBuffer
 
@@ -369,7 +442,7 @@ export function handleTimeBufferUpdated(event: TimeBufferUpdatedEvent): void {
 
 export function handleUnpaused(event: UnpausedEvent): void {
   let entity = new Unpaused(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
+    event.transaction.hash.concatI32(event.logIndex.toI32()),
   )
   entity.account = event.params.account
 

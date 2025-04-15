@@ -8,9 +8,9 @@ import {
 } from "matchstick-as/assembly/index"
 import { BigInt, Address } from "@graphprotocol/graph-ts"
 import { AuctionBid } from "../generated/schema"
-import { AuctionBid as AuctionBidEvent } from "../generated/QRAuction/QRAuction"
-import { handleAuctionBid } from "../src/qr-auction"
-import { createAuctionBidEvent } from "./qr-auction-utils"
+import { AuctionBid as AuctionBidEvent } from "../generated/QRAuctionV2/QRAuctionV2"
+import { handleAuctionBid } from "../src/qr-auction-v-2"
+import { createAuctionBidEvent } from "./qr-auction-v-2-utils"
 
 // Tests structure (matchstick-as >=0.5.0)
 // https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0

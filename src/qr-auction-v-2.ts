@@ -87,6 +87,7 @@ function getOrCreateTrackedAuction(tokenId: BigInt, timestamp: BigInt, startTime
     auction.tokenId = tokenId
     auction.isEthAuction = false
     auction.isQrAuction = true
+    auction.isUsdcAuction = false
     auction.createdAt = timestamp
     auction.startTime = startTime
     auction.endTime = endTime
@@ -146,6 +147,7 @@ export function handleAuctionBid(event: AuctionBidEvent): void {
     bidder.address = event.params.bidder
     bidder.ethBids = false
     bidder.qrBids = true
+    bidder.usdcBids = false
     bidder.firstBidTimestamp = event.block.timestamp
     bidder.lastBidTimestamp = event.block.timestamp
     bidder.bidCount = BigInt.fromI32(1)
@@ -178,6 +180,7 @@ export function handleAuctionBid(event: AuctionBidEvent): void {
     auction.tokenId = event.params.tokenId
     auction.isEthAuction = false
     auction.isQrAuction = true
+    auction.isUsdcAuction = false
     auction.createdAt = event.block.timestamp
     auction.startTime = BigInt.fromI32(0) // We don't know the start time here
     auction.endTime = event.params.endTime

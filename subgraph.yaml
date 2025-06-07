@@ -107,3 +107,59 @@ dataSources:
         - event: Unpaused(address)
           handler: handleUnpaused
       file: ./src/qr-auction-v-2.ts
+  - kind: ethereum
+    name: QRAuctionV3
+    network: base
+    source:
+      address: "0x6207674cc6db2687308f1fB37dF1C7B8990C199b"
+      abi: QRAuctionV3
+      startBlock: 29873336
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - QRAuctionV3AuctionBid
+        - QRAuctionV3AuctionCreated
+        - QRAuctionV3AuctionSettled
+        - QRAuctionV3AuctionWinnerOverridden
+        - QRAuctionV3DurationUpdated
+        - QRAuctionV3MinBidIncrementPercentageUpdated
+        - QRAuctionV3OwnershipTransferred
+        - QRAuctionV3Paused
+        - QRAuctionV3RefundFailed
+        - QRAuctionV3ReservePriceUpdated
+        - QRAuctionV3SettlerWhitelistUpdated
+        - QRAuctionV3TimeBufferUpdated
+        - QRAuctionV3Unpaused
+      abis:
+        - name: QRAuctionV3
+          file: ./abis/QRAuctionV3.json
+      eventHandlers:
+        - event: AuctionBid(uint256,address,uint256,bool,uint256,string,string)
+          handler: handleAuctionBid
+        - event: AuctionCreated(uint256,uint256,uint256)
+          handler: handleAuctionCreated
+        - event: AuctionSettled(uint256,address,uint256,string,string)
+          handler: handleAuctionSettled
+        - event: AuctionWinnerOverridden(uint256,address,address,uint256,bool,string)
+          handler: handleAuctionWinnerOverridden
+        - event: DurationUpdated(uint256)
+          handler: handleDurationUpdated
+        - event: MinBidIncrementPercentageUpdated(uint256)
+          handler: handleMinBidIncrementPercentageUpdated
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Paused(address)
+          handler: handlePaused
+        - event: RefundFailed(indexed address,uint256,string)
+          handler: handleRefundFailed
+        - event: ReservePriceUpdated(uint256)
+          handler: handleReservePriceUpdated
+        - event: SettlerWhitelistUpdated(indexed address,bool)
+          handler: handleSettlerWhitelistUpdated
+        - event: TimeBufferUpdated(uint256)
+          handler: handleTimeBufferUpdated
+        - event: Unpaused(address)
+          handler: handleUnpaused
+      file: ./src/qr-auction-v-3.ts

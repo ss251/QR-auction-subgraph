@@ -10,6 +10,10 @@
     "QRAuctionV3": {
       "address": "0x6207674cc6db2687308f1fB37dF1C7B8990C199b",
       "startBlock": 29873336
+    },
+    "QRAuctionV4": {
+      "address": "0xcB3b4678B623984158B1d1Fcd4062d5a0b56bC7F",
+      "startBlock": 34061607
     }
   }
 }

@@ -163,3 +163,61 @@ dataSources:
         - event: Unpaused(address)
           handler: handleUnpaused
       file: ./src/qr-auction-v-3.ts
+  - kind: ethereum
+    name: QRAuctionV4
+    network: base
+    source:
+      address: "0xcB3b4678B623984158B1d1Fcd4062d5a0b56bC7F"
+      abi: QRAuctionV4
+      startBlock: 34061607
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - QRAuctionV4AuctionBid
+        - QRAuctionV4AuctionCreated
+        - QRAuctionV4AuctionSettled
+        - QRAuctionV4AuctionWinnerOverridden
+        - QRAuctionV4BidContribution
+        - QRAuctionV4RefundFailed
+        - QRAuctionV4SettlerWhitelistUpdated
+        - QRAuctionV4TimeBufferUpdated
+        - QRAuctionV4ReservePriceUpdated
+        - QRAuctionV4Paused
+        - QRAuctionV4Unpaused
+        - QRAuctionV4OwnershipTransferred
+        - QRAuctionV4EmergencyWithdrawal
+      abis:
+        - name: QRAuctionV4
+          file: ./abis/QRAuctionV4.json
+      eventHandlers:
+        - event: AuctionBid(indexed uint256,indexed address,indexed uint256,bool,uint256,string,string)
+          handler: handleAuctionBid
+        - event: AuctionCreated(indexed uint256,indexed uint256,indexed uint256)
+          handler: handleAuctionCreated
+        - event: AuctionSettled(indexed uint256,(uint256,string,(address,uint256,uint256)[]))
+          handler: handleAuctionSettled
+        - event: AuctionWinnerOverridden(indexed uint256,(uint256,string,(address,uint256,uint256)[]),(uint256,string,(address,uint256,uint256)[]),indexed bool)
+          handler: handleAuctionWinnerOverridden
+        - event: BidContributionMade(indexed uint256,string,indexed address,indexed uint256,uint256,bool,uint256,string)
+          handler: handleBidContributionMade
+        - event: RefundFailed(indexed address,indexed uint256,string)
+          handler: handleRefundFailed
+        - event: SettlerWhitelistUpdated(indexed address,indexed bool)
+          handler: handleSettlerWhitelistUpdated
+        - event: TimeBufferUpdated(uint256)
+          handler: handleTimeBufferUpdated
+        - event: CreateBidReservePriceUpdated(uint256)
+          handler: handleCreateBidReservePriceUpdated
+        - event: ContributeBidReservePriceUpdated(uint256)
+          handler: handleContributeBidReservePriceUpdated
+        - event: Paused(address)
+          handler: handlePaused
+        - event: Unpaused(address)
+          handler: handleUnpaused
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: EmergencyWithdrawal(indexed address,indexed address,indexed uint256)
+          handler: handleEmergencyWithdrawal
+      file: ./src/qr-auction-v-4.ts

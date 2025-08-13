@@ -398,3 +398,155 @@ type QRAuctionV3Unpaused @entity(immutable: true) {
   blockTimestamp: BigInt!
   transactionHash: Bytes!
 }
+
+# QRAuctionV4 Entities
+type QRAuctionV4AuctionBid @entity(immutable: true) {
+  id: Bytes!
+  tokenId: BigInt! # uint256
+  bidder: Bytes! # address (first contributor)
+  amount: BigInt! # uint256 (total amount)
+  extended: Boolean! # bool
+  endTime: BigInt! # uint256
+  urlString: String! # string
+  name: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QRAuctionV4AuctionCreated @entity(immutable: true) {
+  id: Bytes!
+  tokenId: BigInt! # uint256
+  startTime: BigInt! # uint256
+  endTime: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QRAuctionV4AuctionSettled @entity(immutable: true) {
+  id: Bytes!
+  tokenId: BigInt! # uint256
+  winner: Bytes! # address (first contributor for V3 compatibility)
+  amount: BigInt! # uint256 (total amount)
+  urlString: String! # string
+  name: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QRAuctionV4AuctionWinnerOverridden @entity(immutable: true) {
+  id: Bytes!
+  tokenId: BigInt! # uint256
+  originalWinner: Bytes! # address (first contributor)
+  newWinner: Bytes! # address (first contributor)
+  amount: BigInt! # uint256 (total amount)
+  refunded: Boolean! # bool
+  name: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+# V4-specific entities for group bidding (Loud Ship phase)
+type QRAuctionV4BidContribution @entity(immutable: true) {
+  id: Bytes!
+  tokenId: BigInt! # uint256
+  urlString: String! # string
+  contributor: Bytes! # address
+  amount: BigInt! # uint256
+  totalAmount: BigInt! # uint256 (running total after this contribution)
+  extended: Boolean! # bool
+  endTime: BigInt! # uint256
+  name: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QRAuctionV4RefundFailed @entity(immutable: true) {
+  id: Bytes!
+  to: Bytes! # address
+  amount: BigInt! # uint256
+  reason: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QRAuctionV4SettlerWhitelistUpdated @entity(immutable: true) {
+  id: Bytes!
+  settler: Bytes! # address
+  status: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QRAuctionV4TimeBufferUpdated @entity(immutable: true) {
+  id: Bytes!
+  timeBuffer: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QRAuctionV4CreateBidReservePriceUpdated @entity(immutable: true) {
+  id: Bytes!
+  createBidReservePrice: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QRAuctionV4ContributeBidReservePriceUpdated @entity(immutable: true) {
+  id: Bytes!
+  contributeBidReservePrice: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QRAuctionV4MaxExtensionTimeUpdated @entity(immutable: true) {
+  id: Bytes!
+  maxExtensionTime: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QRAuctionV4Paused @entity(immutable: true) {
+  id: Bytes!
+  account: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QRAuctionV4Unpaused @entity(immutable: true) {
+  id: Bytes!
+  account: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QRAuctionV4OwnershipTransferred @entity(immutable: true) {
+  id: Bytes!
+  previousOwner: Bytes! # address
+  newOwner: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QRAuctionV4EmergencyWithdrawal @entity(immutable: true) {
+  id: Bytes!
+  token: Bytes! # address
+  to: Bytes! # address
+  amount: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
